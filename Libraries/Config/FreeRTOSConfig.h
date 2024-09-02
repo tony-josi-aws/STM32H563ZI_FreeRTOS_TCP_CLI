@@ -223,8 +223,8 @@ http://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_TCP/examples_FreeRTOS_simula
 extern void vLoggingPrintf( const char * pcFormat, ... );
 extern void vPrintStringToUart( const char *str );
 
-//#define configPRINTF( x )                       vLoggingPrintf x
-//#define configPRINT_STRING( x )                 vPrintStringToUart( x )
+#define configPRINTF( x )                       vLoggingPrintf x
+#define configPRINT_STRING( x )                 vPrintStringToUart( x )
 #define configLOGGING_MAX_MESSAGE_LENGTH        1024
 
 /* Pcap capture configuration. */

@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "string.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -32,7 +33,8 @@
 /* USER CODE BEGIN PTD */
 
 #define TEST_CANDIDATE_0 0
-#define TEST_CANDIDATE_1 1
+#define TEST_CANDIDATE_1 0
+#define TEST_CANDIDATE_2 1
 
 /* USER CODE END PTD */
 
@@ -48,6 +50,14 @@
 
 /* Private variables ---------------------------------------------------------*/
 
+ETH_TxPacketConfig TxConfig;
+ETH_DMADescTypeDef  DMARxDscrTab[ETH_RX_DESC_CNT]; /* Ethernet Rx DMA Descriptors */
+ETH_DMADescTypeDef  DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptors */
+
+ETH_HandleTypeDef heth;
+
+RNG_HandleTypeDef hrng;
+
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
@@ -60,6 +70,8 @@ static void MX_GPIO_Init(void);
 static void MX_MEMORYMAP_Init(void);
 static void MX_ICACHE_Init(void);
 static void MX_USART3_UART_Init(void);
+static void MX_ETH_Init(void);
+static void MX_RNG_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -90,6 +102,14 @@ static void task_3_thread_fn(void *io_params) {
 	}
 }
 
+static void task_4_thread_fn(void *io_params) {
+  while (1)
+  {
+    #define TEST_CANDIDATE_1_STR "Kernel Task 4 test!!!\n\r"
+    HAL_UART_Transmit( &( huart3 ), ( const uint8_t * )TEST_CANDIDATE_1_STR, strlen( TEST_CANDIDATE_1_STR ), 1000 );
+    vTaskDelay( pdMS_TO_TICKS( 2000 ) );
+  }
+}
 
 #endif /* TEST_CANDIDATE_1 */
 
@@ -126,6 +146,8 @@ int main(void)
   MX_MEMORYMAP_Init();
   MX_ICACHE_Init();
   MX_USART3_UART_Init();
+  MX_ETH_Init();
+  MX_RNG_Init();
   /* USER CODE BEGIN 2 */
 
 #if TEST_CANDIDATE_0
@@ -138,7 +160,7 @@ int main(void)
 
 #elif TEST_CANDIDATE_1
 
-  TaskHandle_t task_1_handle, task_2_handle, task_3_handle;
+  TaskHandle_t task_1_handle, task_2_handle, task_3_handle, task_4_handle;
   BaseType_t ret_status;
 
   ret_status = xTaskCreate(task_1_thread_fn, "Task_1", 200, "HW from 1", 2, &task_1_handle);
@@ -147,12 +169,20 @@ int main(void)
   ret_status = xTaskCreate(task_2_thread_fn, "Task_2", 200, "HW from 2", 2, &task_2_handle);
   configASSERT(ret_status == pdPASS);
 
-  ret_status = xTaskCreate(task_3_thread_fn, "Task_2", 200, "HW from 2", 2, &task_3_handle);
+  ret_status = xTaskCreate(task_3_thread_fn, "Task_3", 200, "HW from 3", 2, &task_3_handle);
+  configASSERT(ret_status == pdPASS);
+
+  ret_status = xTaskCreate(task_4_thread_fn, "Task_4", 512, "HW from 4", 2, &task_4_handle);
   configASSERT(ret_status == pdPASS);
 
   vTaskStartScheduler();
 
-#endif /* TEST_CANDIDATE_1 */
+#elif TEST_CANDIDATE_2
+
+  extern void app_main( void );
+  app_main();
+
+#endif /* TEST_CANDIDATE_2 */
 
   /* USER CODE END 2 */
 
@@ -185,8 +215,9 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS_DIGITAL;
+  RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLL1_SOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
@@ -217,6 +248,55 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ETH Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ETH_Init(void)
+{
+
+  /* USER CODE BEGIN ETH_Init 0 */
+
+  /* USER CODE END ETH_Init 0 */
+
+   static uint8_t MACAddr[6];
+
+  /* USER CODE BEGIN ETH_Init 1 */
+
+  /* USER CODE END ETH_Init 1 */
+  heth.Instance = ETH;
+  MACAddr[0] = 0x00;
+  MACAddr[1] = 0x80;
+  MACAddr[2] = 0xE1;
+  MACAddr[3] = 0x00;
+  MACAddr[4] = 0x00;
+  MACAddr[5] = 0x00;
+  heth.Init.MACAddr = &MACAddr[0];
+  heth.Init.MediaInterface = HAL_ETH_RMII_MODE;
+  heth.Init.TxDesc = DMATxDscrTab;
+  heth.Init.RxDesc = DMARxDscrTab;
+  heth.Init.RxBuffLen = 1524;
+
+  /* USER CODE BEGIN MACADDRESS */
+
+  /* USER CODE END MACADDRESS */
+
+  if (HAL_ETH_Init(&heth) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  memset(&TxConfig, 0 , sizeof(ETH_TxPacketConfig));
+  TxConfig.Attributes = ETH_TX_PACKETS_FEATURES_CSUM | ETH_TX_PACKETS_FEATURES_CRCPAD;
+  TxConfig.ChecksumCtrl = ETH_CHECKSUM_IPHDR_PAYLOAD_INSERT_PHDR_CALC;
+  TxConfig.CRCPadCtrl = ETH_CRC_PAD_INSERT;
+  /* USER CODE BEGIN ETH_Init 2 */
+
+  /* USER CODE END ETH_Init 2 */
+
 }
 
 /**
@@ -265,6 +345,33 @@ static void MX_MEMORYMAP_Init(void)
   /* USER CODE BEGIN MEMORYMAP_Init 2 */
 
   /* USER CODE END MEMORYMAP_Init 2 */
+
+}
+
+/**
+  * @brief RNG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RNG_Init(void)
+{
+
+  /* USER CODE BEGIN RNG_Init 0 */
+
+  /* USER CODE END RNG_Init 0 */
+
+  /* USER CODE BEGIN RNG_Init 1 */
+
+  /* USER CODE END RNG_Init 1 */
+  hrng.Instance = RNG;
+  hrng.Init.ClockErrorDetection = RNG_CED_ENABLE;
+  if (HAL_RNG_Init(&hrng) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RNG_Init 2 */
+
+  /* USER CODE END RNG_Init 2 */
 
 }
 
@@ -359,22 +466,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED2_YELLOW_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : RMII_MDC_Pin RMII_RXD0_Pin RMII_RXD1_Pin */
-  GPIO_InitStruct.Pin = RMII_MDC_Pin|RMII_RXD0_Pin|RMII_RXD1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : RMII_REF_CLK_Pin RMII_MDIO_Pin RMII_CRS_DV_Pin */
-  GPIO_InitStruct.Pin = RMII_REF_CLK_Pin|RMII_MDIO_Pin|RMII_CRS_DV_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
   /*Configure GPIO pin : VBUS_SENSE_Pin */
   GPIO_InitStruct.Pin = VBUS_SENSE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
@@ -393,14 +484,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : RMII_TXD1_Pin */
-  GPIO_InitStruct.Pin = RMII_TXD1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
-  HAL_GPIO_Init(RMII_TXD1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LED3_RED_Pin */
   GPIO_InitStruct.Pin = LED3_RED_Pin;
@@ -423,14 +506,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF10_USB;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : RMII_TXT_EN_Pin RMI_TXD0_Pin */
-  GPIO_InitStruct.Pin = RMII_TXT_EN_Pin|RMI_TXD0_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
-  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
-
   /*Configure GPIO pins : ARD_D1_TX_Pin ARD_D0_RX_Pin */
   GPIO_InitStruct.Pin = ARD_D1_TX_Pin|ARD_D0_RX_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -445,7 +520,7 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-#if TEST_CANDIDATE_1
+#if 1
 
 void vApplicationMallocFailedHook( void )
 {
