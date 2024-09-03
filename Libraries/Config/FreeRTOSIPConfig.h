@@ -40,7 +40,9 @@
 extern "C" {
 #endif
 
-#define ipconfigUSE_IPv6                            1
+#define BUILD_IPERF3								1
+
+#define ipconfigUSE_IPv6                            0
 
 #define ipconfigPORT_SUPPRESS_WARNING				1
 
@@ -349,22 +351,24 @@ messages. */
 
 #define ipconfigCHECK_IP_QUEUE_SPACE                    1
 
-#define USE_IPERF                                       0
+/* ***************** IPERF ***************************/
 
-#define ipconfigIPERF_DOES_ECHO_UDP                     0
+#define ipconfigIPERF_DOES_ECHO_UDP                     1
 
 #define ipconfigIPERF_VERSION                           3
 #define ipconfigIPERF_STACK_SIZE_IPERF_TASK             680
 
 #if 1
-#define ipconfigIPERF_TX_BUFSIZE                        ( 24 * ipconfigTCP_MSS )
-#define ipconfigIPERF_TX_WINSIZE                        ( 12 )
-#define ipconfigIPERF_RX_BUFSIZE                        ( 24 * ipconfigTCP_MSS )
-#define ipconfigIPERF_RX_WINSIZE                        ( 12 )
+#define ipconfigIPERF_TX_BUFSIZE                        ( 16 * ipconfigTCP_MSS )
+#define ipconfigIPERF_TX_WINSIZE                        ( 16 )
+#define ipconfigIPERF_RX_BUFSIZE                        ( 16 * ipconfigTCP_MSS )
+#define ipconfigIPERF_RX_WINSIZE                        ( 16 )
 
 /* The iperf module declares a character buffer to store its send data. */
-#define ipconfigIPERF_RECV_BUFFER_SIZE                  ( 24 * ipconfigTCP_MSS )
+#define ipconfigIPERF_RECV_BUFFER_SIZE                  ( 16 * ipconfigTCP_MSS )
 #endif
+
+/* ***************** IPERF ***************************/
 
 #define ipconfigETHERNET_MINIMUM_PACKET_BYTES           ( 60 )
 

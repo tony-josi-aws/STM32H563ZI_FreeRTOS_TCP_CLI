@@ -60,7 +60,7 @@
  *
  */
 #define mainCREATE_TCP_ECHO_TASKS_SINGLE              0 /* 1 */
-#define mainCREATE_UDP_ECHO_TASKS_SINGLE              1
+#define mainCREATE_UDP_ECHO_TASKS_SINGLE              0
 
 /*-----------------------------------------------------------*/
 /*-----------------------------------------------------------*/
@@ -262,6 +262,12 @@ void app_main( void )
                     }
                 #endif
 
+				#if (BUILD_IPERF3 == 1)
+                    {
+						#include "iperf_task.h"
+                    	vIPerfInstall();
+                    }
+				#endif
             }
 
         }
