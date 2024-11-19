@@ -3,7 +3,7 @@
 
 #define echoNUM_ECHO_CLIENTS				1
 #define echoTCP_ECHO_SERVER_PORT			5050
-#define configTCP_ECHO_SERVER_ADDR			"192.168.0.100"
+#define configTCP_ECHO_SERVER_ADDR			"192.168.1.101"
 
 /* The size of the buffers is a multiple of the MSS - the length of the data
 sent is a pseudo random size between 20 and echoBUFFER_SIZES. */

@@ -59,7 +59,7 @@
  * where it is expected to echo back the data, which, the created tasks receives.
  *
  */
-#define mainCREATE_TCP_ECHO_TASKS_SINGLE              0 /* 1 */
+#define mainCREATE_TCP_ECHO_TASKS_SINGLE              1 /* 1 */
 #define mainCREATE_UDP_ECHO_TASKS_SINGLE              0
 
 /*-----------------------------------------------------------*/
