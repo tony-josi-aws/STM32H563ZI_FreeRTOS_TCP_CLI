@@ -59,8 +59,9 @@
  * where it is expected to echo back the data, which, the created tasks receives.
  *
  */
-#define mainCREATE_TCP_ECHO_TASKS_SINGLE              1 /* 1 */
+#define mainCREATE_TCP_ECHO_TASKS_SINGLE              0 /* 1 */
 #define mainCREATE_UDP_ECHO_TASKS_SINGLE              0
+#define USE_TX_RX_SERVER_SOCK_REUSE_TASKS             1
 
 /*-----------------------------------------------------------*/
 /*-----------------------------------------------------------*/
@@ -268,6 +269,14 @@ void app_main( void )
                     	vIPerfInstall();
                     }
 				#endif
+
+
+                #if ( USE_TX_RX_SERVER_SOCK_REUSE_TASKS == 1 )
+                    {
+                        void startTCPServerReuseTxRx_Tasks( uint16_t usTaskStackSize, UBaseType_t uxTaskPriority );
+                        startTCPServerReuseTxRx_Tasks(mainCLI_TASK_STACK_SIZE, mainCLI_TASK_PRIORITY);
+                    }
+                #endif
             }
 
         }
